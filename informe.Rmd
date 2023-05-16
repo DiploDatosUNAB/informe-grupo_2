@@ -1,6 +1,6 @@
 ---
-title: "titulo"
-author: "nombres"
+title: "Exploración de datos sobre vino."
+author: "Jorge González"
 output: html_document
 ---
 
@@ -13,7 +13,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introducción
 
+En el siguiente informe exploraremos datos sobre reseñas de vinos publicadas en la revista [WineEnthusiast](http://www.winemag.com/?s=&drink_type=wine).
 
+### Origen de los datos.
+Se trata de un conjunto de datos traducidos y extraídos como resumen de las 130.000 reseñas de vinos con variedad, ubicación, bodega, precio y descripción existentes en  [Kaggle](https://www.kaggle.com/zynicide/wine-reviews). Los datos se extrajeron de WineEnthusiast durante la semana del 15 de junio de 2017.
 
 ## Exploración de los datos
 
