@@ -8,6 +8,9 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 # Cargar los paquetes necesarios acá
+library(readr)
+library(dplyr)
+library(ggplot2)
 ```
 
 
@@ -23,17 +26,80 @@ Se trata de un conjunto de datos traducidos y extraídos como resumen de las 130
 
 ```{r}
 # Código para cargar o leer los datos
+vinos <- read_csv("datos/vinos.csv")
 ```
-
-
 
 ```{r}
-# Cödigo de R acá 
-# Agregá más bloques según sea necesario
+# Paises con vinos reseñados ordenados por cantidad de observaciones
+vinos |> 
+  group_by(pais) |> 
+  summarise(cantidad = n()) |> 
+  arrange(desc(cantidad))
 ```
 
+```{r}
+# Paises con los vinos reseñados ordenados por promedio de precio
+vinos |> 
+  group_by(pais) |> 
+  summarise(prom_precio = mean(precio, na.rm = T)) |> 
+  arrange(desc(prom_precio))
+```
 
+```{r}
+vinos$precio |> 
+  sd(na.rm = T)
+```
+
+```{r}
+# Paises con los vinos reseñados ordenados por mayor puntaje
+vinos |> 
+  group_by(pais) |> 
+  summarise(prom_puntaje = mean(puntos, na.rm = T)) |> 
+  arrange(desc(prom_puntaje))
+```
+
+```{r}
+vinos$puntos |> 
+  sd(na.rm = T)
+```
+
+```{r}
+# Ranking de cepas por puntaje
+vinos |> 
+  group_by(variedad) |> 
+  summarise(prom_puntaje_por_cepa = mean(puntos, na.rm = T)) |> 
+  arrange(desc(prom_puntaje_por_cepa))
+```
+
+```{r}
+# Top 10 de vinos reseñados más caros 
+vinos |> 
+  top_n(10, precio) |> 
+  arrange(desc(precio))
+```
+
+```{r}
+# Rango de precios de la muestra
+vinos$precio |> 
+  range(na.rm = T)
+```
+
+```{r}
+# Rango de puntajes de la muestra
+vinos$puntos |> 
+  range(na.rm = T)
+```
 
 ## Hipótesis
+
+#. Asumiendo que la mayor calificación en las reseñas refieren a una mayor "calidad" del vino reseñado:  
+  ¿cuáles son los vinos con mejor relación precio-calidad?  
+  ¿cuáles son los países con mejor relación precio-calidad?  
+  ¿cuáles son las cepas con mejor relación precio-calidad?  
+
+#. ¿Se disparan los precios si las calificaciones están por encima de los 90 puntos?  
+
+#. ¿Cuál es la relación para los vinos argentinos?  
+
 
 
