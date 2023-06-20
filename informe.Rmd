@@ -2,13 +2,9 @@
 title: "Exploración de datos sobre vino."
 author: "Jorge González"
 output:
-  html_document:
-    code_folding: hide
-    toc: true
-    theme: cosmo
-    df_print: !expr knitr::kable
+  prettydoc::html_pretty:
+    theme: architect
 ---
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -17,9 +13,10 @@ library(readr)
 library(dplyr)
 library(ggplot2)
 library(knitr)
+library(kableExtra)
 library(tidyr)
+library(forcats)
 ```
-
 
 ## Introducción
 
@@ -39,7 +36,7 @@ vinos <- read_csv("datos/vinos.csv")
 
 Tenemos `r ncol(vinos)` variables que se listan a continuación: 
 
-```{r}
+```{r echo=FALSE}
 vinos |> colnames()
 ```
 
@@ -50,15 +47,17 @@ La muestra cuenta con `r nrow(vinos)` observaciones. Estas observaciones corresp
 ### Países con más vinos reseñados.  
 Los 10 países con más vinos reseñados son:
 
-```{r}
+```{r echo=FALSE}
 # Paises con vinos reseñados ordenados por cantidad de observaciones
-pais_obs <- vinos |> 
+vinos |> 
   group_by(pais) |> 
   summarise(cantidad = n()) |> 
   top_n(10, cantidad) |> 
-  arrange(desc(cantidad))
-pais_obs |> 
-  kable(col.names = c("País", "Cantidad reseñas"), align = "c")
+  arrange(desc(cantidad)) |> 
+  kable(col.names = c("País", "Cantidad reseñas"), align = c("l", "r")) |> 
+  kable_styling(bootstrap_options = "bordered", full_width = F) |> 
+  column_spec(1, bold = T) |> 
+  column_spec(2, bold = T)
 ```
 
 ---
@@ -66,14 +65,17 @@ pais_obs |>
 ### Países con vinos más caros.  
 El ránking de los vinos más caros en promedio lo lideran: 
 
-```{r}
+```{r echo=FALSE}
 # Paises con los vinos reseñados ordenados por promedio de precio
 vinos |> 
   group_by(pais) |> 
   summarise(prom_precio = mean(precio, na.rm = T)) |> 
   top_n(10, prom_precio) |> 
   arrange(desc(prom_precio)) |> 
-  kable(col.names = c("País", "Precio promedio"), align = "c")
+  kable(col.names = c("País", "Precio promedio"), align = c("l", "r")) |> 
+  kable_styling(bootstrap_options = "bordered", full_width = F) |> 
+  column_spec(1, bold = T) |> 
+  column_spec(2, bold = T)
 ```
 
 El rango de precios oscila entre los `r vinos$precio |> range(na.rm = T) |> min()` y los `r vinos$precio |> range(na.rm = T) |> max()` euros.  
@@ -85,14 +87,18 @@ Su desvío estándar `r vinos$precio |> sd(na.rm = T)`.
 ### Países con mejores puntuaciones.  
 Los países con los mejores puntajes acumulados son:
 
-```{r}
+```{r echo=FALSE}
 # Paises con los vinos reseñados ordenados por mayor puntaje
 vinos |> 
   group_by(pais) |> 
+  drop_na(pais) |> 
   summarise(prom_puntaje = mean(puntos, na.rm = T)) |> 
   top_n(10, prom_puntaje) |> 
   arrange(desc(prom_puntaje)) |> 
-  kable(col.names = c("País", "Puntaje promedio"), align = "c")
+  kable(col.names = c("País", "Puntaje promedio"), align = c("l", "r")) |> 
+  kable_styling(bootstrap_options = "bordered", full_width = F) |> 
+  column_spec(1, bold = T) |> 
+  column_spec(2, bold = T)
 ```
 
 El peor puntaje es de `r vinos$puntos |> range(na.rm = T) |> min()` puntos y el mejor de `r vinos$puntos |> range(na.rm = T) |> max()`.  
@@ -104,19 +110,36 @@ Su desvío estándar `r vinos$puntos |> sd(na.rm = T)`.
 ### Cepas más valoradas según puntaje.  
 Las 10 cepas con mejor puntaje son:
 
-```{r}
+```{r echo=FALSE}
 # Ranking de cepas por puntaje
 vinos |> 
   group_by(variedad) |> 
   summarise(prom_puntaje_por_cepa = mean(puntos, na.rm = T)) |> 
-  top_n(10, prom_puntaje_por_cepa) |> 
   arrange(desc(prom_puntaje_por_cepa)) |> 
-  kable(col.names = c("Variedad", "Puntaje promedio"), align = "c")
+  top_n(10, prom_puntaje_por_cepa) |> 
+  kable(col.names = c("Variedad", "Puntaje promedio"), align = c("l", "r")) |> 
+  kable_styling(bootstrap_options = "bordered", full_width = F) |> 
+  column_spec(1, bold = T) |> 
+  column_spec(2, bold = T)
 ```
 
 ---
 
-```{r}
+## Hipótesis
+
+#. Asumiendo que la mayor calificación en las reseñas refieren a una mayor "calidad" del vino reseñado ¿cuáles son los países con mejor relación precio-calidad?  
+
+#. ¿Se disparan los precios si las calificaciones están por encima de los 95 puntos?  
+
+#. ¿Cuál es la relación para los vinos argentinos?  
+
+---
+
+## Conclusiones
+
+1. Luego de relacionar las variables "puntos" y "precio" (puntos/precio) y de calcular la mediana de la relación, graficamos:
+
+```{r include=FALSE}
 # Ranking de vinos por puntaje
 vinos_puntos <- vinos |> 
   group_by(titulo_resena) |> 
@@ -124,24 +147,20 @@ vinos_puntos <- vinos |>
   arrange(desc(n))
 ```
 
-## Hipótesis
-
-#. Asumiendo que la mayor calificación en las reseñas refieren a una mayor "calidad" del vino reseñado ¿cuáles son los países con mejor relación precio-calidad?  
-
-#. ¿Se disparan los precios si las calificaciones están por encima de los 90 puntos?  
-
-#. ¿Cuál es la relación para los vinos argentinos?  
-
-## Conclusiones
-
-1. Luego de relacionar las variables "puntos" y "precio" (puntos/precio) y de calcular la mediana de la relación calculada, graficamos:
-
 ```{r include=FALSE}
 # Relación entre el precio y el puntaje:
 precio_puntos <- vinos |> 
   select(puntos, precio, titulo_resena) |> 
   mutate(pp_ratio = puntos/precio) |> 
-  arrange(desc(pp_ratio)) 
+  arrange(desc(pp_ratio))
+```
+
+```{r include=FALSE}
+# Top 10 de paises con vinos más reseñados
+pais_obs <- vinos |> 
+  group_by(pais) |> 
+  summarise(cantidad = n()) |> 
+  top_n(10, cantidad)
 ```
 
 ```{r include=FALSE}
@@ -150,34 +169,109 @@ mediana_paises <- precio_puntos |>
   inner_join(vinos) |> 
   inner_join(pais_obs) |> 
   group_by(pais) |> 
-  summarize(med_ratio = median(precio_puntos$pp_ratio, na.rm = TRUE)) |> 
+  summarize(med_ratio = median(pp_ratio, na.rm = T)) |> 
   arrange(desc(med_ratio))
 ```
 
 ```{r include=FALSE}
-# Join para tener precios, cantidad de observaciones y relación precio puntaje en 
-# una sola tabla para hacer el gráfico:
+# Join para tener todos los datos en una sola tabla para hacer el gráfico:
 vinos_plot <- precio_puntos |> 
   inner_join(vinos) |> 
   inner_join(vinos_puntos) |> 
   inner_join(pais_obs) |> 
   select(titulo_resena, pp_ratio, pais, variedad, n) |> 
-  drop_na(pais)
+  drop_na(pais) |> 
+  mutate(pais = as.factor(pais)) |> 
+  mutate(pais = fct_relevel(pais, mediana_paises$pais))
 ```
 
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='90%'}
 # Boxplot a partir del data frame vinos_plot.
-ggplot(vinos_plot, aes(x = reorder(pais, desc(pais)), y = pp_ratio)) +
-  stat_boxplot(geom = "errorbar", width = 0.2) + # Bigotes
-  geom_boxplot(aes(color = "black", fill = pais), width = 0.6, alpha = 0.5, outlier.colour = NA) +  # Colores
-  scale_y_continuous(name = "Relación puntaje y precio (mayor es mejor)") +  # Etiqueta de la variable continua
-  scale_x_discrete(name = "País") +  # Etiqueta de los grupos
-  ggtitle("Relación precio puntaje de vinos por país") +   # Título del plot
+vinos_plot |> 
+  ggplot(aes(x = reorder(pais, desc(pais)), y = pp_ratio)) +
+  stat_boxplot(geom = "errorbar", width = 0.2) + 
+  geom_boxplot(aes(color = "black", fill = pais), width = 0.6, alpha = 0.5, outlier.colour = NA) +  
+  labs(y = "Relación puntaje y precio (mayor es mejor)", x = "País") +  
+  ggtitle("Relación precio puntaje de vinos por país", subtitle = "Para los 10 paises con más reseñas") +   
   theme(legend.position = "none", panel.background = element_blank()) +
   coord_flip()
 ```
 
-Según vemos en el gráfico los vinos chilenos, portugueses y argentinos son los que cuentan con la mejor relación precio calidad.
+Según vemos en el gráfico los vinos chilenos, portugueses y argentinos son los que cuentan con la mejor relación precio calidad para este grupo de países (top 10 de cantidad de reseñas).
   
- 2. En cuanto al aumento de precios para los vinos mejor calificados: 
+ 2. En cuanto al aumento de precios para los vinos mejor calificados (más de 95 puntos): 
   
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='90%'}
+vinos |> 
+  ggplot(aes(puntos, precio)) +
+  geom_point(alpha = 1/20, na.rm = T) +
+  labs(y = "Precio", x = "Puntaje") + 
+  theme(legend.position = "none", panel.background = element_blank())
+```
+
+Si bien existe un aumento de precios, no se ve que se disparen para los vinos que cuentan con calificaciones por encima de los 95 puntos.
+
+3. Gráfica de la relación precio/calidad para los vinos argentinos.
+
+```{r echo=FALSE}
+# Me quedo solo con los vinos de Argentina.
+vinos <- vinos |> filter(pais == "Argentina")
+vinos$region_1[vinos$region_1 == "Uco Valley"] <- "Valle de Uco"
+```
+
+```{r include=FALSE}
+# Ranking de vinos por puntaje
+vinos_puntos <- vinos |> 
+  group_by(titulo_resena) |> 
+  summarise(n = n()) |> 
+  arrange(desc(n))
+```
+
+```{r include=FALSE}
+# Relación entre el precio y el puntaje:
+precio_puntos <- vinos |> 
+  select(puntos, precio, titulo_resena) |> 
+  mutate(pp_ratio = puntos/precio) |> 
+  arrange(desc(pp_ratio))
+```
+
+```{r include=FALSE}
+# ranking de regiones más reseñadas
+pais_obs <- vinos |> 
+  group_by(region_1) |> 
+  summarise(cantidad = n()) |> 
+  top_n(10, cantidad)
+```
+
+```{r include=FALSE}
+# Mediana de la relación precio puntaje por region y ordenados por ranking
+mediana_paises <- precio_puntos |> 
+  inner_join(vinos) |> 
+  inner_join(pais_obs) |> 
+  group_by(region_1) |> 
+  summarize(med_ratio = median(pp_ratio, na.rm = T)) |> 
+  arrange(desc(med_ratio))
+```
+
+```{r include=FALSE}
+# Join para tener todos los datos en una sola tabla para hacer el gráfico:
+vinos_plot <- precio_puntos |> 
+  inner_join(vinos) |> 
+  inner_join(vinos_puntos) |> 
+  inner_join(pais_obs) |> 
+  select(titulo_resena, pp_ratio, region_1, variedad, n) |> 
+  drop_na(region_1) |> 
+  mutate(region_1 = as.factor(region_1)) |> 
+  mutate(region_1 = fct_relevel(region_1, mediana_paises$region_1))
+```
+
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='90%'}
+# Boxplot a partir del data frame vinos_plot.
+vinos_plot |> 
+  ggplot(aes(x = reorder(region_1, desc(region_1)), y = pp_ratio)) +
+  stat_boxplot(geom = "errorbar", width = 0.2) + 
+  geom_boxplot(aes(color = "black", fill = region_1), width = 0.6, alpha = 0.5, outlier.colour = NA) +  
+  labs(y = "Relación puntaje y precio (mayor es mejor)", x = "Región") +  
+  ggtitle("Relación precio puntaje de vinos argentinos por región") +   
+  theme(legend.position = "none", panel.background = element_blank()) +
+  coord_flip()
