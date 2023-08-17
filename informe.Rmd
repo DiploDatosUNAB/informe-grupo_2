@@ -2,8 +2,8 @@
 title: "Exploración de datos sobre vino."
 author: "Jorge González"
 output:
-  prettydoc::html_pretty:
-    theme: architect
+#  prettydoc::html_pretty:
+#    theme: architect
 ---
 
 ```{r setup, include=FALSE}
@@ -189,8 +189,9 @@ vinos_plot <- precio_puntos |>
 # Boxplot a partir del data frame vinos_plot.
 vinos_plot |> 
   ggplot(aes(x = reorder(pais, desc(pais)), y = pp_ratio)) +
-  stat_boxplot(geom = "errorbar", width = 0.2) + 
-  geom_boxplot(aes(color = "black", fill = pais), width = 0.6, alpha = 0.5, outlier.colour = NA) +  
+  geom_violin(aes(color = pais, fill = pais), alpha = 0.5) +
+  stat_boxplot(geom = "errorbar", width = 0.15) +
+  geom_boxplot(aes(color = pais, fill = pais), color = "black", outlier.colour = NA, width = 0.3) +
   labs(y = "Relación puntaje y precio (mayor es mejor)", x = "País") +  
   ggtitle("Relación precio puntaje de vinos por país", subtitle = "Para los 10 paises con más reseñas") +   
   theme(legend.position = "none", panel.background = element_blank()) +
