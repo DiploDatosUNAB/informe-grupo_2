@@ -270,9 +270,14 @@ vinos_plot <- precio_puntos |>
 # Boxplot a partir del data frame vinos_plot.
 vinos_plot |> 
   ggplot(aes(x = reorder(region_1, desc(region_1)), y = pp_ratio)) +
-  stat_boxplot(geom = "errorbar", width = 0.2) + 
-  geom_boxplot(aes(color = "black", fill = region_1), width = 0.6, alpha = 0.5, outlier.colour = NA) +  
+  geom_violin(aes(color = region_1, fill = region_1), alpha = 0.5) +
+  stat_boxplot(geom = "errorbar", width = 0.15) + 
+  geom_boxplot(aes(color = region_1, fill = region_1), color = "black", outlier.colour = NA, width = 0.3) +  
   labs(y = "Relación puntaje y precio (mayor es mejor)", x = "Región") +  
   ggtitle("Relación precio puntaje de vinos argentinos por región") +   
   theme(legend.position = "none", panel.background = element_blank()) +
   coord_flip()
+```
+
+
+
