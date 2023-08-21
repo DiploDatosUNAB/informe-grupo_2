@@ -216,13 +216,24 @@ Si bien existe un aumento de precios, no se ve que se disparen para los vinos qu
 
 ```{r echo=FALSE}
 # Me quedo solo con los vinos de Argentina.
-vinos <- vinos |> filter(pais == "Argentina")
-vinos$region_1[vinos$region_1 == "Uco Valley"] <- "Valle de Uco"
+vinos_arg <- vinos |> filter(pais == "Argentina") |> drop_na(provincia) |> drop_na(region_1)
+
+# Llevo todas las regiones a provincia para unificar por este criterio.
+regiones_mendoza <- c("Cafayate", "Tupungato", "Agrelo", "Valle de Uco", "Uco Valley", "Luján de Cuyo", "La Consulta", "Perdriel", "Maipú", "Vista Flores", "San Carlos", "San Rafael", "Altos de Mendoza", "Medrano")
+vinos_arg$region_1[vinos_arg$region_1 %in% regiones_mendoza] <- "Mendoza"
+regiones_rio_negro <- c("Alto Valle del Río Negro", "Río Negro Valley")
+vinos_arg$region_1[vinos_arg$region_1 %in% regiones_rio_negro] <- "Río Negro"
+regiones_san_juan <- c("Tulum Valley", "Zonda Valley", "Pedernal Valley")
+vinos_arg$region_1[vinos_arg$region_1 %in%  regiones_san_juan] <- "San Juan"
+vinos_arg$region_1[vinos_arg$region_1 == "Calchaquí Valley"] <- "Salta"
+vinos_arg$region_1[vinos_arg$region_1 == "Famatina Valley"] <- "La Rioja"
+
+# vinos_arg$provincia = ifelse(vinos_arg$provincia == "Otra", vinos_arg$region_1, vinos_arg$provincia)
 ```
 
 ```{r include=FALSE}
 # Ranking de vinos por puntaje
-vinos_puntos <- vinos |> 
+vinos_puntos <- vinos_arg |> 
   group_by(titulo_resena) |> 
   summarise(n = n()) |> 
   arrange(desc(n))
@@ -230,7 +241,7 @@ vinos_puntos <- vinos |>
 
 ```{r include=FALSE}
 # Relación entre el precio y el puntaje:
-precio_puntos <- vinos |> 
+precio_puntos <- vinos_arg |> 
   select(puntos, precio, titulo_resena) |> 
   mutate(pp_ratio = puntos/precio) |> 
   arrange(desc(pp_ratio))
@@ -238,16 +249,16 @@ precio_puntos <- vinos |>
 
 ```{r include=FALSE}
 # ranking de regiones más reseñadas
-pais_obs <- vinos |> 
+pais_obs <- vinos_arg |> 
   group_by(region_1) |> 
   summarise(cantidad = n()) |> 
-  top_n(10, cantidad)
+  top_n(8, cantidad)
 ```
 
 ```{r include=FALSE}
 # Mediana de la relación precio puntaje por region y ordenados por ranking
 mediana_paises <- precio_puntos |> 
-  inner_join(vinos) |> 
+  inner_join(vinos_arg) |> 
   inner_join(pais_obs) |> 
   group_by(region_1) |> 
   summarize(med_ratio = median(pp_ratio, na.rm = T)) |> 
@@ -257,13 +268,12 @@ mediana_paises <- precio_puntos |>
 ```{r include=FALSE}
 # Join para tener todos los datos en una sola tabla para hacer el gráfico:
 vinos_plot <- precio_puntos |> 
-  inner_join(vinos) |> 
+  inner_join(vinos_arg) |> 
   inner_join(vinos_puntos) |> 
   inner_join(pais_obs) |> 
   select(titulo_resena, pp_ratio, region_1, variedad, n) |> 
-  drop_na(region_1) |> 
   mutate(region_1 = as.factor(region_1)) |> 
-  mutate(region_1 = fct_relevel(region_1, mediana_paises$region_1))
+  mutate(region_1 = fct_relevel(region_1, mediana_paises$provincia))
 ```
 
 ```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='90%'}
@@ -273,8 +283,8 @@ vinos_plot |>
   geom_violin(aes(color = region_1, fill = region_1), alpha = 0.5) +
   stat_boxplot(geom = "errorbar", width = 0.15) + 
   geom_boxplot(aes(color = region_1, fill = region_1), color = "black", outlier.colour = NA, width = 0.3) +  
-  labs(y = "Relación puntaje y precio (mayor es mejor)", x = "Región") +  
-  ggtitle("Relación precio puntaje de vinos argentinos por región") +   
+  labs(y = "Relación puntaje y precio (mayor es mejor)", x = "Provincia") +  
+  ggtitle("Relación precio puntaje de vinos argentinos por provincia") +   
   theme(legend.position = "none", panel.background = element_blank()) +
   coord_flip()
 ```
