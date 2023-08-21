@@ -2,8 +2,8 @@
 title: "Exploración de datos sobre vino."
 author: "Jorge González"
 output:
-#  prettydoc::html_pretty:
-#    theme: architect
+  prettydoc::html_pretty:
+    theme: architect
 ---
 
 ```{r setup, include=FALSE}
@@ -16,6 +16,8 @@ library(knitr)
 library(kableExtra)
 library(tidyr)
 library(forcats)
+
+options(OutDec=",", digits = 4)
 ```
 
 ## Introducción
@@ -79,8 +81,8 @@ vinos |>
 ```
 
 El rango de precios oscila entre los `r vinos$precio |> range(na.rm = T) |> min()` y los `r vinos$precio |> range(na.rm = T) |> max()` euros.  
-El promedio general de precios es de `r vinos$precio |> mean(na.rm = T)` euros.  
-Su desvío estándar `r vinos$precio |> sd(na.rm = T)`.  
+El promedio general de precios es de `r round(vinos$precio |> mean(na.rm = T), 2)` euros.  
+Su desvío estándar `r round(vinos$precio |> sd(na.rm = T), 2)`.  
 
 ---
 
@@ -102,8 +104,8 @@ vinos |>
 ```
 
 El peor puntaje es de `r vinos$puntos |> range(na.rm = T) |> min()` puntos y el mejor de `r vinos$puntos |> range(na.rm = T) |> max()`.  
-El promedio general de puntos es de `r vinos$puntos |> mean(na.rm = T)` puntos.  
-Su desvío estándar `r vinos$puntos |> sd(na.rm = T)`.  
+El promedio general de puntos es de `r round(vinos$puntos |> mean(na.rm = T))` puntos.  
+Su desvío estándar `r round(vinos$puntos |> sd(na.rm = T))`.  
 
 ---
 
@@ -205,7 +207,7 @@ Según vemos en el gráfico los vinos chilenos, portugueses y argentinos son los
 ```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE, out.width='90%'}
 vinos |> 
   ggplot(aes(puntos, precio)) +
-  geom_point(alpha = 1/20, na.rm = T) +
+  geom_point(aes(color = puntos), alpha = 1/20, na.rm = T) +
   labs(y = "Precio", x = "Puntaje") + 
   theme(legend.position = "none", panel.background = element_blank())
 ```
@@ -216,7 +218,10 @@ Si bien existe un aumento de precios, no se ve que se disparen para los vinos qu
 
 ```{r echo=FALSE}
 # Me quedo solo con los vinos de Argentina.
-vinos_arg <- vinos |> filter(pais == "Argentina") |> drop_na(provincia) |> drop_na(region_1)
+vinos_arg <- vinos |> 
+  filter(pais == "Argentina") |> 
+  drop_na(provincia) |> 
+  drop_na(region_1)
 
 # Llevo todas las regiones a provincia para unificar por este criterio.
 regiones_mendoza <- c("Cafayate", "Tupungato", "Agrelo", "Valle de Uco", "Uco Valley", "Luján de Cuyo", "La Consulta", "Perdriel", "Maipú", "Vista Flores", "San Carlos", "San Rafael", "Altos de Mendoza", "Medrano")
@@ -252,7 +257,8 @@ precio_puntos <- vinos_arg |>
 pais_obs <- vinos_arg |> 
   group_by(region_1) |> 
   summarise(cantidad = n()) |> 
-  top_n(8, cantidad)
+  top_n(8, cantidad) |> 
+  arrange(desc(cantidad))
 ```
 
 ```{r include=FALSE}
